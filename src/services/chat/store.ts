@@ -62,8 +62,11 @@ const FILE_RETRY_LIMIT = 2
 /** 退避基数，第 n 次重试等待 2^n 倍；连续失败达到上限就放弃，把原始报错展示出来 */
 const FILE_RETRY_BASE_DELAY = 1000
 
-/** 阅读链接始终开启，智能搜索开关控制是否另行声明搜索工具（含边想边搜）。 */
-const serverTools = (search: boolean): CreateMessageRequest['tools'] => {
+/** 阅读链接始终开启（仅 flash 支持），智能搜索开关控制是否声明搜索工具（含边想边搜）。v4-pro 不支持这些扩展工具，返回空。 */
+const serverTools = (search: boolean, model: ChatModel): CreateMessageRequest['tools'] => {
+  if (model !== 'deepseek-flash') {
+    return []
+  }
   const tools: CreateMessageRequest['tools'] = [
     { type: 'deepseek_read_url', name: 'deepseek_read_url' },
   ]
@@ -1110,9 +1113,13 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
         const prepared = await prepareFiles(sessionId, request, controller.signal)
         preparing = false
         // 附件就绪后获取本轮信息；续写沿用原回答快照，重新生成的快照独立保存。
-        const latestReminder = prepared.prefix
-          ? prepared.prefix.latestReminder
-          : createLatestReminder(useSettings.getState())
+        // v4-pro 不支持 latest_reminder 扩展，此时不生成、不回传。
+        const flashModel = (initial.model ?? MODEL) === 'deepseek-flash'
+        const latestReminder = flashModel
+          ? prepared.prefix
+            ? prepared.prefix.latestReminder
+            : createLatestReminder(useSettings.getState())
+          : undefined
         reply = { ...reply, latestReminder }
         updateReply(sessionId, reply)
         persist(sessionId)
@@ -1134,8 +1141,10 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
             messages,
             thinking: { type: initial.thinking ? 'enabled' : 'disabled' },
             safety_check: SAFETY_CHECK,
-            tools: serverTools(initial.search ?? false),
-            ...(titleRequests.has(controller) ? { title: { enabled: true } } : {}),
+            tools: serverTools(initial.search ?? false, initial.model ?? MODEL),
+            ...(titleRequests.has(controller) && (initial.model ?? MODEL) === 'deepseek-flash'
+              ? { title: { enabled: true } }
+              : {}),
           },
           controller.signal
         )

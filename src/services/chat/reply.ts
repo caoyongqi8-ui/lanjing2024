@@ -309,9 +309,11 @@ export const toRequestMessages = (
 ): MessageParam[] => {
   const messages: MessageParam[] = []
   let previousReminder: string | undefined
+  // 本轮不发 latest_reminder（模型不支持扩展时）也跳历史快照，避免回传触发报错。
+  const reminderEnabled = latestReminder !== undefined
   const appendReminder = (reminder: string | undefined) => {
     // 仅在当前分支首次出现或内容变化时插入快照；缺少快照的消息保持原有内容。
-    if (reminder && reminder !== previousReminder) {
+    if (reminderEnabled && reminder && reminder !== previousReminder) {
       messages.push({ role: 'latest_reminder', content: reminder })
       previousReminder = reminder
     }
