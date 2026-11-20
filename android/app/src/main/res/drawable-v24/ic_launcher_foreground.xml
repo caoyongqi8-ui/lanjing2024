@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportHeight="108"
+    android:viewportWidth="108">
+    <!-- 鲸鱼身体 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,60 C30,50 34,42 42,40 L62,40 C70,42 76,48 76,56 C76,60 74,64 70,65 L38,65 C34,64 30,62 30,60 Z" />
+    <!-- 鲸鱼头部圆点/嘴 -->
+    <path
+        android:fillColor="#1E3A8A"
+        android:pathData="M68,52 m-2,0 a2,2 0 1,1 4,0 a2,2 0 1,1 -4,0" />
+    <!-- 尾巴 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,58 C24,54 20,52 16,54 C20,58 22,62 24,64 C27,63 29,61 30,58 Z" />
+    <!-- 喷水 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,40 C63,34 66,32 70,32 C68,36 68,38 70,40 Z" />
+</vector>
