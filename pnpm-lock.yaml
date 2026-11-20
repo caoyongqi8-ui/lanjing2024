@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@capacitor-community/speech-recognition':
+        specifier: 7.0.1
+        version: 7.0.1(@capacitor/core@8.6.2)
       '@types/katex':
         specifier: ^0.16.5
         version: 0.16.8
@@ -113,6 +116,11 @@ packages:
 
   '@braintree/sanitize-url@7.1.2':
     resolution: {integrity: sha512-jigsZK+sMF/cuiB7sERuo9V7N9jx+dhmHHnQyDSVdpZwVutaBu7WvNYqMDLSgFgfB30n452TP3vjDAvFC973mA==}
+
+  '@capacitor-community/speech-recognition@7.0.1':
+    resolution: {integrity: sha512-ykpBZziR575X0eURO5vXaD9gVrXXC/7Ra2qql/2KP6/jxWOqAFuw4eKjSPjwdAgGE6a/Z+v8FJm4SVh57MVwDA==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   '@capacitor/android@8.6.2':
     resolution: {integrity: sha512-dWXnXmOVTtxU91n5h11MzoQ7PAMjyzU1qguw0mBJZiwSuhGvLKTG/IlsQ75H8qeE0a1acV2f573x15wYvyzuVA==}
@@ -1729,6 +1737,10 @@ snapshots:
   '@antfu/utils@8.1.1': {}
 
   '@braintree/sanitize-url@7.1.2': {}
+
+  '@capacitor-community/speech-recognition@7.0.1(@capacitor/core@8.6.2)':
+    dependencies:
+      '@capacitor/core': 8.6.2
 
   '@capacitor/android@8.6.2(@capacitor/core@8.6.2)':
     dependencies:

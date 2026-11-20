@@ -1,49 +1,61 @@
 import { useEffect, useRef, useState } from 'react'
 
-/** 两次更新之间的最小间隔：小于此值的连续输入合并，避免渲染过载 */
-const MIN_WAIT = 16
-/** 上次渲染耗时的倍数，过了这段时间才允许下次更新（越低越接近逐字） */
-const TIME_CONSUMING_RATE = 1
-/** 两次更新的最长间隔：无论渲染多慢，最多攒这么久就更新一次 */
-const MAX_WAIT = 120
+/** 每次步进的间隔（毫秒）：越小越平滑，但 CPU 开销越大 */
+const TICK_MS = 40
+/** 每次步进释放的最大字符数：控制「每秒吐字」速度，接近原生 App 语速 */
+const CHARS_PER_TICK = 1.0
+/** 单条回复超过该字符数后，逐步加快追赶，避免长回复太久不出完 */
+const SPEEDUP_THRESHOLD = 400
 
 /**
- * 流式过程中按渲染耗时节流 Markdown 内容的更新：
- * 更新输出时记录开始时间，提交后按耗时 × TIME_CONSUMING_RATE（不超过 MAX_WAIT）
- * 算出下次允许更新的时间点；新内容在到期时更新，连续输入合并为最新内容。
- * 关闭节流时直接返回最新内容。
+ * 匀速逐字流式渲染：内容按固定节奏（每 TICK_MS 释放 CHARS_PER_TICK 字）渐进显示，
+ * 视觉上接近原生 App 的匀速出字，而不是一簇一簇或瞬间全部出现。
+ * 关闭节流（非流式）时直接返回完整内容。
  */
 export const useThrottleMarkdownRender = (content: string, enable: boolean) => {
-  // 首次渲染从挂载时开始计时
-  const startRef = useRef(performance.now())
-  const updatableAtRef = useRef(0)
   const [output, setOutput] = useState(content)
+  const shownRef = useRef(0)
+  const contentRef = useRef(content)
 
+  // 内容持续更新时记录最新长度；结束（enable 变 false）时一下子显示全部。
   useEffect(() => {
-    const now = performance.now()
-    const interval = Math.min(
-      MAX_WAIT,
-      Math.max(MIN_WAIT, (now - startRef.current) * TIME_CONSUMING_RATE)
-    )
-    updatableAtRef.current = now + interval
-  }, [output])
+    contentRef.current = content
+    if (!enable) {
+      // 非流式：直接显示全部，重置进度
+      shownRef.current = content.length
+      setOutput(content)
+    }
+  }, [content, enable])
 
+  // 流式过程中以固定节奏推进显示位置，直到追上最新内容。
   useEffect(() => {
     if (!enable) {
       return
     }
-    const update = () => {
-      startRef.current = performance.now()
-      setOutput(content)
+    let timer: ReturnType<typeof setTimeout>
+    const step = () => {
+      const target = contentRef.current.length
+      const shown = shownRef.current
+      if (shown >= target) {
+        // 已追上，等下一次内容到达再触发
+        timer = setTimeout(step, TICK_MS)
+        return
+      }
+      // 长回复逐步加快追赶速度，避免积压太多出不完
+      const backlog = target - shown
+      const perTick = CHARS_PER_TICK + Math.floor(backlog / SPEEDUP_THRESHOLD)
+      let next = Math.min(target, shown + perTick)
+      // 至少前进一步，确保推进
+      if (next <= shown) {
+        next = Math.min(target, shown + 1)
+      }
+      shownRef.current = next
+      setOutput(contentRef.current.slice(0, next))
+      timer = setTimeout(step, TICK_MS)
     }
-    const delay = updatableAtRef.current - performance.now()
-    if (delay <= 0) {
-      update()
-      return
-    }
-    const timer = setTimeout(update, delay)
+    timer = setTimeout(step, TICK_MS)
     return () => clearTimeout(timer)
-  }, [content, enable])
+  }, [enable])
 
   return enable ? output : content
 }

@@ -1,4 +1,4 @@
-import type { Node as MdAstNode, Nodes, Parent, RootContent, Root, Text } from 'mdast'
+import type { Node as MdAstNode, Nodes, Parent, RootContent, Root, Text, Literal, Data } from 'mdast'
 import { findAndReplace } from 'mdast-util-find-and-replace'
 import { fromMarkdown } from 'mdast-util-from-markdown'
 import { gfmFromMarkdown } from 'mdast-util-gfm'
@@ -13,13 +13,35 @@ export interface CitationNode extends MdAstNode {
   source: Source
 }
 
+/**
+ * 数学节点：与 mdast-util-math 的结构一致。
+ * NodeNext 解析下第三方包的 `declare module 'mdast'` 扩展可能不生效，这里补齐，
+ * 结构相同，即便第三方扩展已被加载也不会产生重复声明冲突。
+ */
+interface MathLiteral extends Literal {
+  type: 'math'
+  meta?: string | null | undefined
+  data?: Data | undefined
+}
+
+interface InlineMathLiteral extends Literal {
+  type: 'inlineMath'
+  data?: Data | undefined
+}
+
 declare module 'mdast' {
   interface RootContentMap {
     citation: CitationNode
+    math: MathLiteral
   }
 
   interface PhrasingContentMap {
     citation: CitationNode
+    inlineMath: InlineMathLiteral
+  }
+
+  interface BlockContentMap {
+    math: MathLiteral
   }
 }
 
