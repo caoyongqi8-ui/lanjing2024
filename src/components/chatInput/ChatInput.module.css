@@ -305,6 +305,14 @@
   margin-left: auto;
 }
 
+.modelToggle {
+  padding: 0;
+  width: 34px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+}
+
 .sendButton {
   display: flex;
   align-items: center;
