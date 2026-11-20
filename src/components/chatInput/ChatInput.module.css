@@ -310,8 +310,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   margin-left: 6px;
   padding: 0;
   border: none;
@@ -328,5 +328,10 @@
   &.disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
   }
 }

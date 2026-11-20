@@ -200,4 +200,5 @@ export const en = {
   balanceQuery: 'Query balance',
   balanceFailed: 'Query failed',
   modelSelectTooltip: 'Switch model',
+  contextUsage: 'Context usage',
 } satisfies Record<keyof typeof zh, string>

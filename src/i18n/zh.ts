@@ -191,4 +191,5 @@ export const zh = {
   balanceQuery: '查询余额',
   balanceFailed: '查询失败',
   modelSelectTooltip: '切换模型',
+  contextUsage: '上下文用量',
 } as const

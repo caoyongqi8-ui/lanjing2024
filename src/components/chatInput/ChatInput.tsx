@@ -31,6 +31,7 @@ import { DraftAttachments } from './DraftAttachments.js'
 import { useVoiceInput } from './useVoiceInput.js'
 import { VoiceButton } from './VoiceButton.js'
 import { Spectrum } from './Spectrum.js'
+import { UsageWidget } from './UsageWidget.js'
 import { useTranslate } from '../../i18n/index.js'
 import styles from './ChatInput.module.css'
 
@@ -243,17 +244,21 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
           </Tooltip>
         </div>
         <div className={styles.right}>
+          <UsageWidget />
           <VoiceButton
             status={voice.status}
             disabled={!voice.available}
             seconds={voice.seconds}
-            onClick={() => {
+            onPressStart={() => {
               if (
-                voice.status !== 'idle' ||
+                voice.status === 'idle' &&
                 (!useChatStore.getState().importingHistory && ensureApiKey())
               ) {
-                void voice.toggle()
+                void voice.start()
               }
+            }}
+            onPressEnd={() => {
+              void voice.finish()
             }}
           />
           <IconButton
