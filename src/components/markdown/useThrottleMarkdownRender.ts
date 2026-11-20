@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
-/** 两次更新的最长间隔 */
-const MAX_WAIT = 2000
-/** 上次渲染耗时的倍数，过了这段时间才允许下次更新 */
-const TIME_CONSUMING_RATE = 2
+/** 两次更新之间的最小间隔：小于此值的连续输入合并，避免渲染过载 */
+const MIN_WAIT = 16
+/** 上次渲染耗时的倍数，过了这段时间才允许下次更新（越低越接近逐字） */
+const TIME_CONSUMING_RATE = 1
+/** 两次更新的最长间隔：无论渲染多慢，最多攒这么久就更新一次 */
+const MAX_WAIT = 120
 
 /**
  * 流式过程中按渲染耗时节流 Markdown 内容的更新：
@@ -19,8 +21,11 @@ export const useThrottleMarkdownRender = (content: string, enable: boolean) => {
 
   useEffect(() => {
     const now = performance.now()
-    updatableAtRef.current =
-      now + Math.min(MAX_WAIT, (now - startRef.current) * TIME_CONSUMING_RATE)
+    const interval = Math.min(
+      MAX_WAIT,
+      Math.max(MIN_WAIT, (now - startRef.current) * TIME_CONSUMING_RATE)
+    )
+    updatableAtRef.current = now + interval
   }, [output])
 
   useEffect(() => {

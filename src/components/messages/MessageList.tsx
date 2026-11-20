@@ -30,7 +30,7 @@ const getUploadRetryId = (messages: Message[], streaming: boolean) => {
 import styles from './MessageList.module.css'
 
 /** 距底部小于该值时视为在底部，流式内容增长时跟随 */
-const STICKY_THRESHOLD = 40
+const STICKY_THRESHOLD = 80
 const EMPTY_VERSIONS: MessageVersions = { ids: [], index: -1 }
 
 export const MessageList = ({
@@ -47,6 +47,7 @@ export const MessageList = ({
   const contentRef = useRef<HTMLDivElement>(null)
   const stickyRef = useRef(true)
   const scrollTopRef = useRef(0)
+  const userScrolledUpRef = useRef(false)
   const restoreScrollRef = useRef<{ messageId: string; top: number } | null>(null)
   const messages = getVisibleMessages(session)
   const [previousVersions, setPreviousVersions] = useState(() =>
@@ -96,6 +97,7 @@ export const MessageList = ({
       return
     }
     stickyRef.current = true
+    userScrolledUpRef.current = false
     scrollToBottom()
   }, [session.id, lastMessageId, scrollToBottom])
 
@@ -127,11 +129,22 @@ export const MessageList = ({
     }
     const onScroll = () => {
       const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < STICKY_THRESHOLD
-      // 仅在用户向上滚动时停止跟随底部，布局或内容增高时保持跟随状态。
-      if (nearBottom) {
-        stickyRef.current = true
-      } else if (el.scrollTop < scrollTopRef.current) {
+      const delta = el.scrollTop - scrollTopRef.current
+      // 用户主动向上滚动（明显往上）时锁定「不跟随」，直到其主动滚回底部附近。
+      if (delta < -2) {
+        userScrolledUpRef.current = true
         stickyRef.current = false
+      } else if (userScrolledUpRef.current && nearBottom) {
+        // 用户已滚回底部：解锁，恢复出字时跟随。
+        userScrolledUpRef.current = false
+        stickyRef.current = true
+      } else if (!userScrolledUpRef.current) {
+        // 未处于「主动上滑」状态时，按原有逻辑处理底部跟随。
+        if (nearBottom) {
+          stickyRef.current = true
+        } else if (delta < 0) {
+          stickyRef.current = false
+        }
       }
       scrollTopRef.current = el.scrollTop
     }
