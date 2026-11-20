@@ -26,9 +26,6 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install web dependencies
         run: pnpm install --frozen-lockfile
 
@@ -41,10 +38,16 @@ jobs:
       - name: Grant gradlew executable
         run: chmod +x android/gradlew
 
+      - name: Install Android SDK components
+        run: |
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>&1 || true
+
       - name: Build APK
         working-directory: android
         env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
