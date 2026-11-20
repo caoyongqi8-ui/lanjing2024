@@ -6,6 +6,7 @@
   overflow-y: auto;
   scrollbar-gutter: stable both-edges;
   scrollbar-color: var(--scroll-color) transparent;
+  position: relative;
 }
 
 .scroll {
@@ -34,4 +35,33 @@
   max-width: calc(100% - 40px);
   margin: 0 auto;
   padding-bottom: 24px;
+}
+
+.jumpButton {
+  position: absolute;
+  right: 20px;
+  bottom: 96px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-2);
+  color: var(--dsw-alias-label-secondary);
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.jumpButton:hover {
+  background: var(--dsw-alias-button-ghost-active-fill);
+}
+
+.jumpButton:active {
+  transform: scale(0.92);
 }

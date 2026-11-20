@@ -7,7 +7,7 @@ import {
   IconStopFill16,
   IconThinkOutline14,
 } from '../base/icons.js'
-import { setSearch, setThinking, useSettings } from '../../services/settings.js'
+import { setModel, setSearch, setThinking, useSettings } from '../../services/settings.js'
 import { useIsMobile } from '../../app/viewport.js'
 import { sendMessage, stopReply, useChatStore } from '../../services/chat/store.js'
 import {
@@ -50,6 +50,7 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
     (state) => sessionId !== null && Object.hasOwn(state.streaming, sessionId)
   )
   const thinking = useSettings((state) => state.thinking)
+  const model = useSettings((state) => state.model)
   const importingHistory = useChatStore((state) => state.importingHistory)
   const isMobile = useIsMobile()
   const search = useSettings((state) => state.search)
@@ -202,6 +203,20 @@ const Input = ({ sessionId }: { sessionId: string | null }) => {
       <div className={styles.functionRow}>
         {/* 深度思考 / 智能搜索开关，tooltip 在按钮上方 */}
         <div ref={togglesRef} className={styles.toggles}>
+          <Tooltip content={t('modelSelectTooltip')}>
+            <button
+              type="button"
+              className={clsx(styles.toggle, styles.modelToggle)}
+              aria-label={t('settingsModel')}
+              onClick={() =>
+                setModel(model === 'deepseek-flash' ? 'deepseek-v4-pro' : 'deepseek-flash')
+              }
+            >
+              <span className={styles.toggleLabel}>
+                {model === 'deepseek-flash' ? 'Flash' : 'V4-Pro'}
+              </span>
+            </button>
+          </Tooltip>
           <Tooltip content={t('deactivatedThinkTooltip')}>
             <button
               type="button"

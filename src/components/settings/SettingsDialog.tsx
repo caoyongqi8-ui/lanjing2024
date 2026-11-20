@@ -22,12 +22,15 @@ import {
   isChineseBrowser,
   setLocale,
   setLocation,
+  setModel,
   setThemePreference,
   setTtsVoice,
   useSettings,
   type ThemePreference,
 } from '../../services/settings.js'
 import { useTranslate, type TranslationKey, type TranslationMessage } from '../../i18n/index.js'
+import { getBalance } from '../../services/api/client.js'
+import type { ChatModel } from '../../services/api/types.js'
 import { Button } from '../base/Button.js'
 import { Modal } from '../base/Modal.js'
 import { Select } from '../base/Select.js'
@@ -97,6 +100,7 @@ const SettingsContent = () => {
           {section === 'general' ? (
             <>
               <ThemeSetting />
+              <ModelSetting />
               <LocaleSetting />
               <TtsVoiceSetting />
               <LocationSetting />
@@ -104,6 +108,7 @@ const SettingsContent = () => {
           ) : (
             <>
               <ApiKeyField editor={apiKeyEditor} />
+              <BalanceSetting />
               <MemorySetting />
               <ImportHistory historyImport={historyImport} disabled={historyBusy} />
               <ExportHistory disabled={historyBusy} />
@@ -292,7 +297,97 @@ const LocaleSetting = () => {
   )
 }
 
-/** 朗读音色：stella（海星，女声）/ tide（暗潮，男声） */
+/** 模型选择：flash（快速）与 v4-pro（更强） */
+const ModelSetting = () => {
+  const t = useTranslate()
+  const model = useSettings((state) => state.model)
+  return (
+    <SettingCell
+      label={t('settingsModel')}
+      status={null}
+      action={
+        <Select
+          ariaLabel={t('settingsModel')}
+          value={model}
+          options={[
+            { value: 'deepseek-flash', label: t('settingsModelFlash') },
+            { value: 'deepseek-v4-pro', label: t('settingsModelPro') },
+          ]}
+          onChange={(value) => setModel(value as ChatModel)}
+        />
+      }
+    />
+  )
+}
+
+/** 账户余额：查 DeepSeek /user/balance，只读不产生费用 */
+const BalanceSetting = () => {
+  const t = useTranslate()
+  const apiKey = useSettings((state) => state.apiKey)
+  const [balance, setBalance] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [failed, setFailed] = useState(false)
+
+  const query = async () => {
+    if (!apiKey) {
+      return
+    }
+    setLoading(true)
+    setFailed(false)
+    try {
+      const result = await getBalance(apiKey)
+      const cny = result.balance_infos.find((item) => item.currency === 'CNY')
+      const usd = result.balance_infos.find((item) => item.currency === 'USD')
+      const parts: string[] = []
+      if (cny) {
+        parts.push(`¥${cny.total_balance}`)
+      }
+      if (usd) {
+        parts.push(`$${usd.total_balance}`)
+      }
+      setBalance(parts.join(' · ') || t('balanceUnavailable'))
+    } catch {
+      setFailed(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (apiKey) {
+      void query()
+    } else {
+      setBalance(null)
+      setFailed(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey])
+
+  const status: Status = failed
+    ? { key: 'balanceFailed', error: true }
+    : loading
+      ? { key: 'balanceLoading' }
+      : null
+
+  return (
+    <SettingCell
+      label={t('balanceLabel')}
+      description={!apiKey ? t('balanceUnsetKey') : balance ?? ''}
+      status={status}
+      action={
+        <Button
+          variant="outlined"
+          size="m"
+          className={styles.cellButton}
+          disabled={!apiKey || loading}
+          onClick={() => void query()}
+        >
+          {t('balanceQuery')}
+        </Button>
+      }
+    />
+  )
+}
 const TtsVoiceSetting = () => {
   const t = useTranslate()
   const ttsVoice = useSettings((state) => state.ttsVoice)

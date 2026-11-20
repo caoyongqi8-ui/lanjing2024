@@ -48,6 +48,7 @@ export const MessageList = ({
   const stickyRef = useRef(true)
   const scrollTopRef = useRef(0)
   const userScrolledUpRef = useRef(false)
+  const [atBottom, setAtBottom] = useState(true)
   const restoreScrollRef = useRef<{ messageId: string; top: number } | null>(null)
   const messages = getVisibleMessages(session)
   const [previousVersions, setPreviousVersions] = useState(() =>
@@ -116,6 +117,44 @@ export const MessageList = ({
     [session.id, streaming]
   )
 
+  /** 跳到视口上方最近的一条用户消息开头（分段向上，不一下到顶） */
+  const jumpUp = useCallback(() => {
+    const scroll = scrollRef.current
+    if (!scroll) {
+      return
+    }
+    const items = Array.from(scroll.querySelectorAll<HTMLElement>('[data-message-id]'))
+    const top = scroll.scrollTop
+    // 找第一条「完全在视口上方」的用户消息锚点，取其前一条作为目标
+    let target: HTMLElement | null = null
+    for (const item of items) {
+      if (item.offsetTop < top - 8) {
+        target = item
+      } else {
+        break
+      }
+    }
+    if (target) {
+      userScrolledUpRef.current = true
+      stickyRef.current = false
+      scroll.scrollTo({ top: target.offsetTop - 8, behavior: 'smooth' })
+    } else {
+      // 已在最顶部附近，滚到顶
+      scroll.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [])
+
+  /** 直接滚到底部 */
+  const jumpDown = useCallback(() => {
+    const scroll = scrollRef.current
+    if (!scroll) {
+      return
+    }
+    userScrolledUpRef.current = false
+    stickyRef.current = true
+    scroll.scrollTo({ top: scroll.scrollHeight, behavior: 'smooth' })
+  }, [])
+
   // 跨移动端断点时切换滚动层，并保持输入框及当前阅读位置。
   useLayoutEffect(() => {
     const el = scrollRef.current
@@ -129,6 +168,7 @@ export const MessageList = ({
     }
     const onScroll = () => {
       const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < STICKY_THRESHOLD
+      setAtBottom(nearBottom)
       const delta = el.scrollTop - scrollTopRef.current
       // 用户主动向上滚动（明显往上）时锁定「不跟随」，直到其主动滚回底部附近。
       if (delta < -2) {
@@ -188,6 +228,14 @@ export const MessageList = ({
           </div>
         </div>
         {footer}
+        <button
+          type="button"
+          className={styles.jumpButton}
+          aria-label={atBottom ? '向上' : '到底部'}
+          onClick={atBottom ? jumpUp : jumpDown}
+        >
+          {atBottom ? '↑' : '↓'}
+        </button>
       </div>
     </ScrollToBottomContext.Provider>
   )
